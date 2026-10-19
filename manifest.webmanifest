@@ -1,0 +1,11 @@
+{
+  "name": "Sun Breathing: The Final Gift",
+  "short_name": "Sun Breathing",
+  "description": "Một trận chiến pixel art đặc biệt dành cho em yêu.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090b17",
+  "theme_color": "#090b17",
+  "orientation": "landscape"
+}

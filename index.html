@@ -4,7 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#090b17" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Sun Breathing" />
     <meta name="description" content="Sun Breathing: The Final Gift - một trận chiến pixel art đặc biệt." />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>Sun Breathing: The Final Gift</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
@@ -27,6 +32,16 @@
           <span>CHIÊU</span>
         </button>
         <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-label="Bật toàn màn hình">FULL</button>
+      </div>
+      <div class="fullscreen-help" id="fullscreenHelp" hidden>
+        <div class="fullscreen-help-card" role="dialog" aria-modal="true" aria-labelledby="fullscreenHelpTitle">
+          <button class="fullscreen-help-close" id="fullscreenHelpClose" type="button" aria-label="Đóng hướng dẫn">×</button>
+          <div class="help-kicker">IPHONE SAFARI</div>
+          <h2 id="fullscreenHelpTitle">Muốn ẩn thanh Safari?</h2>
+          <p>iPhone không cho game HTML chiếm màn hình như video khi đang ở trong Safari.</p>
+          <p class="help-steps"><b>Chia sẻ</b> → <b>Thêm vào Màn hình chính</b> → mở game từ biểu tượng mới. Khi đó game sẽ chạy như một app toàn màn hình.</p>
+          <button class="help-ok" id="fullscreenHelpOk" type="button">ĐÃ HIỂU</button>
+        </div>
       </div>
       <p class="sr-only" id="game-status" aria-live="polite"></p>
     </main>

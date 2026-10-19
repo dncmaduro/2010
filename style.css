@@ -181,6 +181,130 @@ canvas {
   color: #fff6c8;
 }
 
+.fullscreen-help {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 6, 15, .82);
+  backdrop-filter: blur(5px);
+}
+
+.fullscreen-help[hidden] { display: none; }
+
+.fullscreen-help-card {
+  position: relative;
+  width: min(92vw, 390px);
+  padding: 25px 24px 22px;
+  border: 2px solid #d78b4c;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1d1a35, #101326 72%);
+  box-shadow: 0 0 0 5px rgba(91, 44, 61, .4), 0 12px 40px rgba(0, 0, 0, .55), 0 0 24px rgba(244, 130, 53, .24);
+  color: #fff2cc;
+  text-align: center;
+}
+
+.fullscreen-help-card::before,
+.fullscreen-help-card::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  width: 34px;
+  height: 2px;
+  background: #ffc857;
+  box-shadow: 0 5px #bb3150;
+}
+
+.fullscreen-help-card::before { left: 18px; }
+.fullscreen-help-card::after { right: 18px; }
+
+.fullscreen-help-card h2 {
+  margin: 5px 0 12px;
+  color: #ffd66f;
+  font: 900 22px/1.05 Impact, "Arial Black", sans-serif;
+  letter-spacing: .03em;
+  text-shadow: 2px 2px #3b1b35, 0 0 12px rgba(255, 170, 64, .35);
+}
+
+.fullscreen-help-card p {
+  margin: 9px 0;
+  color: #f9eac2;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.fullscreen-help-card .help-steps {
+  padding: 10px 12px;
+  border: 1px solid rgba(68, 213, 187, .45);
+  border-radius: 7px;
+  background: rgba(13, 35, 43, .7);
+  color: #a9f0dc;
+}
+
+.help-kicker {
+  color: #ff9a52;
+  font: 900 10px/1 "Trebuchet MS", sans-serif;
+  letter-spacing: .18em;
+}
+
+.fullscreen-help-close {
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: #ffd66f;
+  font: 400 28px/1 Arial, sans-serif;
+  cursor: pointer;
+}
+
+.help-ok {
+  min-width: 130px;
+  margin-top: 8px;
+  padding: 11px 16px;
+  border: 2px solid #ffc857;
+  border-radius: 6px;
+  background: linear-gradient(#8b423c, #4a2139);
+  color: #fff2b9;
+  font: 900 11px/1 "Trebuchet MS", sans-serif;
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+
+.help-ok:active { transform: translateY(2px); }
+
+/* iPhone Safari fallback: this fills the available viewport even though
+   Safari keeps its browser chrome visible. Home-screen standalone mode
+   removes that chrome entirely. */
+html.ios-immersive,
+html.ios-immersive body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+html.ios-immersive body {
+  position: fixed;
+  inset: 0;
+  padding: 0;
+}
+
+html.ios-immersive .game-shell {
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+html.ios-immersive .screen-frame {
+  width: min(100vw, calc(100dvh * 16 / 9));
+  height: min(100dvh, calc(100vw * 9 / 16));
+}
+
 /* Legacy selectors stay harmless if an older cached markup is open. */
 .touch-controls, .touch-btn, .attack-btn {
   display: none;

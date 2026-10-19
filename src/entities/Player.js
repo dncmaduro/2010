@@ -43,6 +43,14 @@ export class Player {
     return true;
   }
 
+  canAttack() {
+    return this.attackCooldown <= 0 && this.attackTimer <= 0;
+  }
+
+  getCooldownRatio() {
+    return Math.max(0, Math.min(1, this.attackCooldown / GAME_CONFIG.battle.attackCooldown));
+  }
+
   hurt() {
     if (this.invulnerable > 0) return false;
     this.hearts -= 1;

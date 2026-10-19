@@ -18,6 +18,7 @@ export class Muzan {
     this.hitsTaken = 0;
     this.speedMultiplier = 1;
     this.attackMultiplier = 1;
+    this.attackCount = 0;
   }
 
   reset() {
@@ -33,6 +34,7 @@ export class Muzan {
     this.hitsTaken = 0;
     this.speedMultiplier = 1;
     this.attackMultiplier = 1;
+    this.attackCount = 0;
   }
 
   setDifficulty(hitsTaken) {
@@ -69,7 +71,19 @@ export class Muzan {
 
   prepareAttack(playerY) {
     if (!this.canAttack()) return false;
-    this.lastAttackY = Math.max(STAGE.enemyMinY, Math.min(STAGE.enemyMaxY, playerY + (Math.random() * 50 - 25)));
+    // Rotate through three readable lanes instead of always aiming at the
+    // player's usual lower starting position. A small amount of player
+    // tracking keeps the attack threatening without making it unavoidable.
+    const lanes = [
+      STAGE.enemyMinY + 12,
+      (STAGE.enemyMinY + STAGE.enemyMaxY) * .5,
+      STAGE.enemyMaxY - 12
+    ];
+    const laneIndex = (this.attackCount + this.hitsTaken) % lanes.length;
+    const laneTarget = lanes[laneIndex];
+    const target = Math.random() < .72 ? laneTarget : playerY;
+    this.lastAttackY = Math.max(STAGE.enemyMinY + 4, Math.min(STAGE.enemyMaxY - 4, target + (Math.random() * 18 - 9)));
+    this.attackCount += 1;
     this.warningTimer = Math.max(.54, GAME_CONFIG.battle.warningDuration - this.hitsTaken * .012);
     const baseCooldown = Math.max(1.28, 2.35 / this.attackMultiplier);
     const randomRange = Math.max(.48, 1.25 / this.attackMultiplier);

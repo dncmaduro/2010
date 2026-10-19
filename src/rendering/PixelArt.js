@@ -292,18 +292,66 @@ function drawMuzan(ctx, state, power) {
   }
 }
 
-export function drawBloodSpike(ctx, projectile) {
+export function drawBloodTendril(ctx, projectile) {
+  const originX = projectile.originX ?? projectile.x;
+  const tipX = projectile.x;
+  const length = Math.max(0, originX - tipX);
+  const wave = Math.sin(projectile.age * 25 + projectile.variant * 1.7);
+  const step = 12;
   ctx.save();
-  ctx.shadowBlur = 5;
-  ctx.shadowColor = "#be3249";
-  ctx.fillStyle = "#711f3b";
-  poly(ctx, [[projectile.x + 13, projectile.y], [projectile.x + 1, projectile.y - 7], [projectile.x - 12, projectile.y - 3], [projectile.x - 4, projectile.y], [projectile.x - 13, projectile.y + 4], [projectile.x + 3, projectile.y + 7]], "#70223c");
-  px(ctx, projectile.x - 5, projectile.y - 2, 8, 4, COLORS.red);
-  px(ctx, projectile.x - 14, projectile.y - 1, 6, 2, "#df4d45");
-  px(ctx, projectile.x + 7, projectile.y - 1, 5, 2, "#251328");
-  ctx.globalAlpha = .5;
-  px(ctx, projectile.x + 17, projectile.y - 2, 18, 2, "#952b45");
-  px(ctx, projectile.x + 25, projectile.y - 6, 11, 1, "#c03a48");
+  ctx.shadowBlur = 7;
+  ctx.shadowColor = "#bb304c";
+  ctx.lineCap = "square";
+
+  // Muzan's hand and the dark cuff where the steel-blood wire is anchored.
+  px(ctx, originX - 5, projectile.y - 7, 8, 14, "#1b1325");
+  px(ctx, originX - 9, projectile.y - 4, 7, 8, "#54213a");
+  px(ctx, originX - 10, projectile.y - 3, 3, 2, "#d6484e");
+  px(ctx, originX - 10, projectile.y + 2, 3, 2, "#9c2b43");
+
+  // A black steel core with a wet red inner thread, both following a slight
+  // serpentine wave as the tendril is pulled out and reeled back in.
+  ctx.strokeStyle = "#120f1d";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  for (let x = originX; x >= tipX; x -= step) {
+    const y = projectile.y + Math.sin(x * .18 + projectile.age * 18 + projectile.variant) * (1.3 + Math.abs(wave) * .6);
+    if (x === originX) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = "#8e263d";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = originX; x >= tipX; x -= step) {
+    const y = projectile.y + Math.sin(x * .18 + projectile.age * 18 + projectile.variant) * (1.3 + Math.abs(wave) * .6);
+    if (x === originX) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Repeating hooked barbs make the weapon read as wire rather than a flat
+  // beam. The head gets an extra blood spike and droplets.
+  for (let x = originX - 8, i = 0; x > tipX + 7; x -= step, i += 1) {
+    const y = projectile.y + Math.sin(x * .18 + projectile.age * 18 + projectile.variant) * (1.3 + Math.abs(wave) * .6);
+    const barb = i % 2 === 0 ? -1 : 1;
+    ctx.strokeStyle = i % 2 === 0 ? "#d34a4f" : "#6e2037";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - 5, y + barb * 6);
+    ctx.stroke();
+    px(ctx, x - 1, y + barb * 5 - 1, 2, 2, "#e4514b");
+  }
+  poly(ctx, [[tipX - 11, projectile.y], [tipX + 3, projectile.y - 7], [tipX + 5, projectile.y], [tipX + 3, projectile.y + 7]], "#281322");
+  poly(ctx, [[tipX - 7, projectile.y], [tipX + 2, projectile.y - 4], [tipX + 4, projectile.y], [tipX + 2, projectile.y + 4]], "#d4494c");
+  px(ctx, tipX - 13, projectile.y - 2, 3, 4, "#ef6a50");
+  if (projectile.tipProgress > .25) {
+    const dripX = tipX + 4 + Math.sin(projectile.age * 22) * 2;
+    const dripY = projectile.y + 6 + (1 - projectile.tipProgress) * 4;
+    px(ctx, dripX, dripY, 2, 5, "#b62d46");
+    px(ctx, dripX - 1, dripY + 4, 3, 2, "#e34a4b");
+  }
   ctx.restore();
 }
 

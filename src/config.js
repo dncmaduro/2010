@@ -40,7 +40,7 @@ export const GAME_CONFIG = {
   battle: {
     targetHits: 12,
     playerHearts: 4,
-    attackCooldown: 0.48,
+    attackCooldown: 0.65,
     playerSpeed: 146,
     projectileSpeed: 264,
     enemySpeed: 28,

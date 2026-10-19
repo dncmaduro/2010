@@ -8,7 +8,7 @@ import { AudioManager } from "./audio.js";
 import {
   COLORS,
   drawArenaFrame,
-  drawBloodSpike,
+  drawBloodTendril,
   drawCastleBackground,
   drawCharacter,
   drawGiftShirt,
@@ -138,7 +138,7 @@ export class Game {
       if (this.warningActive) {
         this.audio.warning();
         this.effects.addText("CẢNH BÁO!", 385, this.muzan.lastAttackY - 14, { color: COLORS.red, size: 9, life: .7, speed: 4 });
-        this.announce("Muzan chuẩn bị Hắc Huyết Chông. Hãy di chuyển lên hoặc xuống!");
+        this.announce("Muzan chuẩn bị Dây Thép Gai Hắc Huyết. Hãy di chuyển lên hoặc xuống!");
       }
     }
 
@@ -166,9 +166,28 @@ export class Game {
   }
 
   spawnBloodVolley(y) {
-    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y - 19, { variant: 0, vx: -this.muzan.getVolleySpeed(0), life: 3.1 }));
-    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y, { variant: 1, vx: -this.muzan.getVolleySpeed(1), life: 3.1 }));
-    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y + 19, { variant: 2, vx: -this.muzan.getVolleySpeed(2), life: 3.1 }));
+    const haste = this.muzan.hitsTaken;
+    const originX = STAGE.enemyX - 17;
+    const profile = {
+      extendDuration: Math.max(.2, .42 - haste * .017),
+      holdDuration: Math.max(.13, .22 - haste * .006),
+      retractDuration: Math.max(.2, .46 - haste * .016),
+      maxReach: Math.min(346, 326 + haste * 1.7)
+    };
+    const makeTendril = (offset, variant, reachScale = 1) => this.projectiles.push(new Projectile("blood", originX, y + offset, {
+      variant,
+      originX,
+      maxReach: profile.maxReach * reachScale,
+      width: 9 + Math.min(4, haste * .15),
+      height: 10,
+      life: profile.extendDuration + profile.holdDuration + profile.retractDuration + .02,
+      extendDuration: profile.extendDuration,
+      holdDuration: profile.holdDuration,
+      retractDuration: profile.retractDuration
+    }));
+    makeTendril(-19, 0, .94);
+    makeTendril(0, 1, 1);
+    makeTendril(19, 2, .9);
     this.effects.bloodBurst(STAGE.enemyX - 27, y);
     this.audio.tone(74, .18, "sawtooth", .09, 42);
   }
@@ -364,11 +383,11 @@ export class Game {
       ctx.fillRect(38, this.muzan.lastAttackY - 1, 404, 2);
       ctx.fillStyle = `rgba(255, 100, 66, ${pulse * .42})`;
       ctx.fillRect(38, this.muzan.lastAttackY - 8, 404, 16);
-      drawText(ctx, "HẮC HUYẾT CHÔNG", 240, this.muzan.lastAttackY - 10, { size: 7, align: "center", color: COLORS.hot, weight: 900 });
+      drawText(ctx, "DÂY THÉP GAI HẮC HUYẾT", 240, this.muzan.lastAttackY - 10, { size: 6.5, align: "center", color: COLORS.hot, weight: 900 });
     }
     for (const projectile of this.projectiles) {
       if (projectile.kind === "sun") drawSunForm(ctx, projectile, projectile.form, this.hits);
-      else drawBloodSpike(ctx, projectile);
+      else drawBloodTendril(ctx, projectile);
     }
     const playerState = this.player.hurtTimer > 0 ? "hurt" : this.player.attackTimer > 0 ? "attack" : this.player.moveDirection ? "move" : "idle";
     const muzanState = this.muzan.warningTimer > 0 ? "prepare" : this.muzan.hurtTimer > 0 ? "hurt" : "idle";
@@ -386,6 +405,12 @@ export class Game {
     pxPanel(ctx, 11, 9, 88, 32, "rgba(30, 25, 45, .95)");
     drawText(ctx, "TANJIRO", 18, 18, { size: 6, color: COLORS.teal, weight: 900 });
     for (let i = 0; i < GAME_CONFIG.battle.playerHearts; i += 1) drawHeart(ctx, 27 + i * 14, 30, i < this.player.hearts, 1);
+    drawText(ctx, "CHIÊU", 106, 18, { size: 5.5, color: COLORS.gold, weight: 900 });
+    px(ctx, 106, 25, 47, 4, "#32263b");
+    const cooldownReady = this.player.canAttack();
+    const cooldownFill = cooldownReady ? 47 : Math.max(3, Math.round(47 * (1 - this.player.getCooldownRatio())));
+    px(ctx, 106, 25, cooldownFill, 4, cooldownReady ? COLORS.teal : COLORS.hot);
+    drawText(ctx, cooldownReady ? "SẴN SÀNG" : `HỒI ${this.player.attackCooldown.toFixed(1)}s`, 106, 38, { size: 5.2, color: cooldownReady ? COLORS.teal : COLORS.hot, weight: 900, shadow: false });
     drawText(ctx, "HƠI THỞ MẶT TRỜI", 240, 14, { size: 7, align: "center", color: COLORS.hot, weight: 900 });
     drawText(ctx, `${this.hits} / ${GAME_CONFIG.battle.targetHits}`, 240, 29, { size: 12, align: "center", color: COLORS.white, weight: 900 });
     drawText(ctx, `${this.currentForm.id}. ${this.currentForm.nameVi}`, 240, 40, { size: 5.5, align: "center", color: COLORS.teal, weight: 900, shadow: false });

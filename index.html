@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#090b17" />
+    <meta name="description" content="Sun Breathing: The Final Gift - một trận chiến pixel art đặc biệt." />
+    <title>Sun Breathing: The Final Gift</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="Sun Breathing: The Final Gift">
+      <div class="screen-frame">
+        <canvas id="gameCanvas" width="480" height="270" aria-label="Game canvas"></canvas>
+        <div class="scanlines" aria-hidden="true"></div>
+      </div>
+      <div class="touch-controls" aria-label="Điều khiển cảm ứng">
+        <button class="touch-btn" data-action="up" aria-label="Di chuyển lên">▲</button>
+        <button class="touch-btn attack-btn" data-action="attack" aria-label="Tấn công">✦</button>
+        <button class="touch-btn" data-action="down" aria-label="Di chuyển xuống">▼</button>
+      </div>
+      <p class="sr-only" id="game-status" aria-live="polite"></p>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

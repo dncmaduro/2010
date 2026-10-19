@@ -15,6 +15,9 @@ export class Muzan {
     this.deathTimer = 0;
     this.alive = true;
     this.lastAttackY = 158;
+    this.hitsTaken = 0;
+    this.speedMultiplier = 1;
+    this.attackMultiplier = 1;
   }
 
   reset() {
@@ -26,6 +29,17 @@ export class Muzan {
     this.hurtTimer = 0;
     this.deathTimer = 0;
     this.alive = true;
+    this.lastAttackY = 158;
+    this.hitsTaken = 0;
+    this.speedMultiplier = 1;
+    this.attackMultiplier = 1;
+  }
+
+  setDifficulty(hitsTaken) {
+    this.hitsTaken = Math.max(0, hitsTaken);
+    // Escalate after every completed form while keeping the pattern readable.
+    this.speedMultiplier = 1 + Math.min(.72, this.hitsTaken * .06);
+    this.attackMultiplier = 1 + Math.min(.9, this.hitsTaken * .075);
   }
 
   update(dt, playerY) {
@@ -37,12 +51,14 @@ export class Muzan {
     }
     this.moveTimer -= dt;
     if (this.moveTimer <= 0) {
-      this.moveTimer = 0.9 + Math.random() * 1.3;
+      const pauseMin = Math.max(.48, .9 - this.hitsTaken * .025);
+      const pauseRange = Math.max(.56, 1.3 - this.hitsTaken * .045);
+      this.moveTimer = pauseMin + Math.random() * pauseRange;
       const follow = Math.random() < 0.48 ? playerY : STAGE.enemyMinY + 8 + Math.random() * (STAGE.enemyMaxY - STAGE.enemyMinY - 16);
       this.targetY = Math.max(STAGE.enemyMinY, Math.min(STAGE.enemyMaxY, follow + (Math.random() * 54 - 27)));
     }
     const distance = this.targetY - this.y;
-    const step = GAME_CONFIG.battle.enemySpeed * dt;
+    const step = GAME_CONFIG.battle.enemySpeed * this.speedMultiplier * dt;
     this.y += Math.max(-step, Math.min(step, distance));
     this.attackTimer -= dt;
   }
@@ -54,9 +70,16 @@ export class Muzan {
   prepareAttack(playerY) {
     if (!this.canAttack()) return false;
     this.lastAttackY = Math.max(STAGE.enemyMinY, Math.min(STAGE.enemyMaxY, playerY + (Math.random() * 50 - 25)));
-    this.warningTimer = GAME_CONFIG.battle.warningDuration;
-    this.attackTimer = 2.35 + Math.random() * 1.25;
+    this.warningTimer = Math.max(.54, GAME_CONFIG.battle.warningDuration - this.hitsTaken * .012);
+    const baseCooldown = Math.max(1.28, 2.35 / this.attackMultiplier);
+    const randomRange = Math.max(.48, 1.25 / this.attackMultiplier);
+    this.attackTimer = baseCooldown + Math.random() * randomRange;
     return true;
+  }
+
+  getVolleySpeed(index = 0) {
+    const base = 188 + this.hitsTaken * 5.5;
+    return Math.min(278, base + index * 7);
   }
 
   finishAttack() {

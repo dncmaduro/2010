@@ -178,12 +178,16 @@ function drawSpriteFrame(ctx, type, x, y, state, time, spriteSheet) {
   const width = type === "muzan" ? 37 : 35;
   const height = type === "muzan" ? 51 : 48;
   const bob = state === "move" ? Math.sin(time * .01) * 2 : Math.sin(time * .006) * .65;
+  // Keep the destination rectangle on the logical pixel grid. The canvas is
+  // rendered at 4x, so this preserves hard sprite edges after browser scaling.
+  const drawX = Math.round(x - width / 2);
+  const drawY = Math.round(y - height / 2 + bob);
   ctx.save();
   ctx.globalAlpha = state === "hurt" && Math.floor(time / 55) % 2 === 0 ? .42 : 1;
   ctx.imageSmoothingEnabled = false;
   ctx.shadowColor = type === "tanjiro" ? "rgba(255, 147, 61, .18)" : "rgba(196, 45, 72, .2)";
   ctx.shadowBlur = state === "attack" || state === "prepare" ? 5 : 0;
-  ctx.drawImage(spriteSheet, frame[0] * cellW, frame[1] * cellH, cellW, cellH, x - width / 2, y - height / 2 + bob, width, height);
+  ctx.drawImage(spriteSheet, frame[0] * cellW, frame[1] * cellH, cellW, cellH, drawX, drawY, width, height);
   ctx.restore();
 }
 
@@ -316,6 +320,14 @@ export function drawSunForm(ctx, projectile, form, intensity = 0) {
   ctx.shadowColor = palette[1];
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+
+  // Every Sun Breathing projectile carries a layered flame ribbon. The
+  // individual forms below sit on top of this shared fire language, so each
+  // hit reads as a sword technique instead of a flat colored projectile.
+  const flamePower = .82 + form.id * .055 + intensity * .025;
+  drawFlameRibbon(ctx, palette, t, flamePower, form.id >= 11 ? 48 : 31 + form.id * .9);
+  drawSunCore(ctx, palette, t, flamePower);
+  drawFireSparks(ctx, palette, t, form.id, flamePower);
 
   if (form.visualType === "crescent") {
     trail(ctx, palette, -28, 0, 18);
@@ -510,6 +522,68 @@ export function drawSunForm(ctx, projectile, form, intensity = 0) {
     ctx.moveTo(-19, 15);
     ctx.lineTo(19, -15);
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawFlameRibbon(ctx, palette, time, power, length) {
+  ctx.save();
+  ctx.globalAlpha *= .94;
+  ctx.shadowBlur = 3 + power * 2;
+  ctx.shadowColor = palette[1];
+
+  // Hot horizontal sword edge.
+  px(ctx, -length, -1, length + 24, 2, palette[2] ?? COLORS.ember);
+  px(ctx, -length + 3, -1, length + 18, 1, palette[1] ?? COLORS.sun);
+
+  for (let i = 0; i < 6; i += 1) {
+    const x = -length + i * 6;
+    const sway = Math.sin(time * 15 + i * 1.65) * (1.2 + i * .25);
+    const height = (5 + (i % 3) * 2) * power;
+    const width = 5 + (i % 2) * 2;
+    flameTongue(ctx, x, sway, height, width, palette[2] ?? COLORS.ember, sway * .6);
+    if (i < 5) {
+      flameTongue(ctx, x + 1, sway, height * .66, width * .55, palette[1] ?? COLORS.sun, -sway * .35);
+      px(ctx, x, sway - Math.round(height * .32), 2, 2, palette[0] ?? COLORS.hot);
+    }
+  }
+  ctx.restore();
+}
+
+function flameTongue(ctx, x, y, height, width, color, lean = 0) {
+  poly(ctx, [
+    [x - width, y + 2],
+    [x - width * .48, y - height * .28],
+    [x + lean, y - height],
+    [x + width * .16, y - height * .4],
+    [x + width, y + 2]
+  ], color);
+}
+
+function drawSunCore(ctx, palette, time, power) {
+  const pulse = 1 + Math.sin(time * 18) * .08;
+  ctx.save();
+  ctx.globalAlpha *= .98;
+  ctx.shadowBlur = 6 + power * 3;
+  ctx.shadowColor = palette[0] ?? COLORS.hot;
+  poly(ctx, [[-12, -5], [-5, -8], [7, -6], [13, 0], [7, 6], [-6, 7], [-13, 1]], palette[2] ?? COLORS.ember);
+  poly(ctx, [[-9, -3], [-3, -5], [8, -4], [11, 0], [6, 4], [-5, 5], [-10, 1]], palette[1] ?? COLORS.sun);
+  px(ctx, -6, -2, Math.round(12 * pulse), 4, palette[0] ?? COLORS.hot);
+  px(ctx, -3, -1, 7, 2, "#fff9d0");
+  ctx.restore();
+}
+
+function drawFireSparks(ctx, palette, time, formId, power) {
+  ctx.save();
+  ctx.globalAlpha *= .92;
+  for (let i = 0; i < 8; i += 1) {
+    const angle = time * (5.5 + formId * .08) + i * 2.43 + formId * .31;
+    const distance = 11 + (i % 4) * 6 + power * 2;
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance * .62;
+    const size = i % 3 === 0 ? 3 : 2;
+    px(ctx, x, y, size, size, palette[i % palette.length]);
+    if (i % 2 === 0) px(ctx, x - 1, y - 3, 1, 3, palette[0] ?? COLORS.hot);
   }
   ctx.restore();
 }

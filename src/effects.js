@@ -80,6 +80,18 @@ export class Effects {
     const palette = form?.colorPalette ?? [COLORS.hot, COLORS.sun, COLORS.ember, "#fff2ae"];
     const count = form?.particlePreset === "dragon" ? 34 : form?.particlePreset === "rays" ? 24 : form?.particlePreset === "orbit" ? 18 : 12 + intensity * 3;
     this.burst(x, y, count, palette, { speed: 55 + intensity * 6, life: .35 + intensity * .02, gravity: 10 });
+    const flameCount = 7 + Math.min(9, form?.id ?? intensity);
+    for (let i = 0; i < flameCount; i += 1) {
+      this.addParticle(x + (Math.random() - .5) * 12, y + (Math.random() - .5) * 10, {
+        color: palette[i % palette.length],
+        vx: (Math.random() - .5) * (35 + intensity * 4),
+        vy: -24 - Math.random() * (38 + intensity * 4),
+        gravity: -4,
+        life: .35 + Math.random() * .35,
+        size: 1.4 + Math.random() * 1.6,
+        shape: "flame"
+      });
+    }
     if (form) this.specialBursts.push({ x, y, life: .72 + form.id * .025, maxLife: .72 + form.id * .025, type: form.visualType, palette });
     this.slashes.push({ x, y, life: .35, maxLife: .35, radius: 24 + intensity * 2, color: COLORS.hot, width: 2 + intensity * .1 });
     this.shake = Math.min(.35, .08 + intensity * .012);
@@ -134,7 +146,16 @@ export class Effects {
       ctx.translate(particle.x, particle.y);
       ctx.rotate(particle.rotation);
       ctx.fillStyle = particle.color;
-      if (particle.shape === "diamond") {
+      if (particle.shape === "flame") {
+        ctx.beginPath();
+        ctx.moveTo(0, particle.size * 2.4);
+        ctx.lineTo(-particle.size * .9, particle.size * .35);
+        ctx.lineTo(-particle.size * .25, -particle.size * 2.2);
+        ctx.lineTo(particle.size * .2, -particle.size * .8);
+        ctx.lineTo(particle.size * .9, particle.size * .25);
+        ctx.closePath();
+        ctx.fill();
+      } else if (particle.shape === "diamond") {
         ctx.beginPath();
         ctx.moveTo(0, -particle.size * 2);
         ctx.lineTo(particle.size, 0);

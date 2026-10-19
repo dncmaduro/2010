@@ -132,7 +132,8 @@ export class Game {
       this.spawnBloodVolley(this.muzan.lastAttackY);
     }
 
-    if (!this.warningActive && this.muzan.canAttack() && Math.random() < dt * .42) {
+    const attackRoll = Math.min(.8, .42 * this.muzan.attackMultiplier);
+    if (!this.warningActive && this.muzan.canAttack() && Math.random() < dt * attackRoll) {
       this.warningActive = this.muzan.prepareAttack(this.player.y);
       if (this.warningActive) {
         this.audio.warning();
@@ -165,9 +166,9 @@ export class Game {
   }
 
   spawnBloodVolley(y) {
-    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y - 19, { variant: 0, vx: -188, life: 3.1 }));
-    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y, { variant: 1, vx: -195, life: 3.1 }));
-    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y + 19, { variant: 2, vx: -202, life: 3.1 }));
+    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y - 19, { variant: 0, vx: -this.muzan.getVolleySpeed(0), life: 3.1 }));
+    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y, { variant: 1, vx: -this.muzan.getVolleySpeed(1), life: 3.1 }));
+    this.projectiles.push(new Projectile("blood", STAGE.enemyX - 31, y + 19, { variant: 2, vx: -this.muzan.getVolleySpeed(2), life: 3.1 }));
     this.effects.bloodBurst(STAGE.enemyX - 27, y);
     this.audio.tone(74, .18, "sawtooth", .09, 42);
   }
@@ -195,6 +196,7 @@ export class Game {
   onSuccessfulHit(x, y) {
     const completedForm = this.currentForm;
     this.hits += 1;
+    this.muzan.setDifficulty(this.hits);
     this.muzan.hit();
     this.effects.sunBurst(x, y, this.hits, completedForm);
     this.effects.addText("HIT!", x, y - 27, { color: COLORS.hot, size: 14 + Math.min(5, this.hits * .25), life: .75, speed: 22 });
@@ -202,7 +204,7 @@ export class Game {
     this.bannerTimer = 1.05;
     this.audio.hit();
     this.currentForm = getSunForm(this.hits);
-    this.announce(`${this.banner} hoàn thành. ${this.hits} trên ${GAME_CONFIG.battle.targetHits}.`);
+    this.announce(`${this.banner} hoàn thành. ${this.hits} trên ${GAME_CONFIG.battle.targetHits}. Muzan tăng tốc x${this.muzan.speedMultiplier.toFixed(1)}.`);
     if (this.hits >= GAME_CONFIG.battle.targetHits) this.startVictory();
   }
 
@@ -394,7 +396,7 @@ export class Game {
     }
     pxPanel(ctx, 379, 9, 90, 32, "rgba(30, 25, 45, .95)");
     drawText(ctx, "MUZAN", 462, 18, { size: 6, align: "right", color: COLORS.red, weight: 900 });
-    drawText(ctx, this.warningActive ? "CHUẨN BỊ..." : "HẮC HUYẾT", 462, 32, { size: 6, align: "right", color: this.warningActive ? COLORS.hot : "#b9a8ae", weight: 800 });
+    drawText(ctx, this.warningActive ? "CHUẨN BỊ..." : `HẮC HUYẾT ×${this.muzan.speedMultiplier.toFixed(1)}`, 462, 32, { size: 6, align: "right", color: this.warningActive ? COLORS.hot : "#b9a8ae", weight: 800 });
   }
 
   drawBanner(ctx) {

@@ -17,7 +17,7 @@ body {
   display: grid;
   place-items: center;
   padding: 0;
-  overflow-x: hidden;
+  overflow: hidden;
   background:
     radial-gradient(circle at 50% -20%, #272449 0%, transparent 58%),
     linear-gradient(160deg, #080912, #17152a 58%, #090b15);
@@ -35,8 +35,9 @@ body {
 
 .screen-frame {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  aspect-ratio: 16 / 9;
   background: #070914;
   box-shadow: 0 0 40px rgba(244, 130, 53, .16);
   overflow: hidden;
@@ -48,7 +49,10 @@ canvas {
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+  backface-visibility: hidden;
   touch-action: none;
 }
 
@@ -112,7 +116,7 @@ canvas {
 
 @media (max-width: 700px) {
   body { padding: 0; }
-  .screen-frame { width: 100vw; height: 100vh; box-shadow: none; }
+  .screen-frame { width: 100vw; height: auto; box-shadow: none; }
   .touch-controls { display: grid; }
 }
 

@@ -1,9 +1,11 @@
 export const VIEWPORT = {
   logicWidth: 480,
   logicHeight: 270,
-  renderScale: 2,
-  width: 960,
-  height: 540
+  // Render at 4x internally so the game remains crisp even when the
+  // 16:9 canvas is scaled to fill a high-resolution browser window.
+  renderScale: 4,
+  width: 1920,
+  height: 1080
 };
 
 export const LOVE_CONFIG = {

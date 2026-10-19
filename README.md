@@ -2,7 +2,7 @@
 
 Mini game đối kháng 2D phong cách anime pixel art, chạy hoàn toàn offline bằng HTML5 Canvas và Web Audio API.
 
-Phiên bản hiện tại dùng world resolution 960×540 (logic 480×270, render nearest-neighbor 2×), sprite sheet PNG nội bộ cho Tanjiro/Muzan và hệ thống 12 thức tách theo dữ liệu trong `src/sunForms.js`.
+Phiên bản hiện tại dùng world resolution 1920×1080 (logic 480×270, render nearest-neighbor 4×), sprite sheet PNG nội bộ cho Tanjiro/Muzan và hệ thống 12 thức tách theo dữ liệu trong `src/sunForms.js`.
 
 ## Chạy game
 

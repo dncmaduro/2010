@@ -4,6 +4,7 @@ export class Effects {
   constructor() {
     this.particles = [];
     this.slashes = [];
+    this.specialBursts = [];
     this.floatingTexts = [];
     this.flash = 0;
     this.flashColor = "#fff4d0";
@@ -14,6 +15,7 @@ export class Effects {
   reset() {
     this.particles.length = 0;
     this.slashes.length = 0;
+    this.specialBursts.length = 0;
     this.floatingTexts.length = 0;
     this.flash = 0;
     this.shake = 0;
@@ -33,6 +35,8 @@ export class Effects {
     this.particles = this.particles.filter((particle) => particle.life > 0);
     for (const slash of this.slashes) slash.life -= dt;
     this.slashes = this.slashes.filter((slash) => slash.life > 0);
+    for (const burst of this.specialBursts) burst.life -= dt;
+    this.specialBursts = this.specialBursts.filter((burst) => burst.life > 0);
     for (const item of this.floatingTexts) {
       item.y -= item.speed * dt;
       item.life -= dt;
@@ -72,8 +76,11 @@ export class Effects {
     }
   }
 
-  sunBurst(x, y, intensity = 1) {
-    this.burst(x, y, 12 + intensity * 3, [COLORS.hot, COLORS.sun, COLORS.ember, "#fff2ae"], { speed: 55 + intensity * 6, life: .35 + intensity * .02, gravity: 10 });
+  sunBurst(x, y, intensity = 1, form = null) {
+    const palette = form?.colorPalette ?? [COLORS.hot, COLORS.sun, COLORS.ember, "#fff2ae"];
+    const count = form?.particlePreset === "dragon" ? 34 : form?.particlePreset === "rays" ? 24 : form?.particlePreset === "orbit" ? 18 : 12 + intensity * 3;
+    this.burst(x, y, count, palette, { speed: 55 + intensity * 6, life: .35 + intensity * .02, gravity: 10 });
+    if (form) this.specialBursts.push({ x, y, life: .72 + form.id * .025, maxLife: .72 + form.id * .025, type: form.visualType, palette });
     this.slashes.push({ x, y, life: .35, maxLife: .35, radius: 24 + intensity * 2, color: COLORS.hot, width: 2 + intensity * .1 });
     this.shake = Math.min(.35, .08 + intensity * .012);
     this.shakePower = Math.min(6, 1.2 + intensity * .22);
@@ -119,6 +126,7 @@ export class Effects {
       ctx.stroke();
       ctx.restore();
     }
+    for (const burst of this.specialBursts) drawSpecialBurst(ctx, burst);
     for (const particle of this.particles) {
       const alpha = Math.max(0, particle.life / particle.maxLife);
       ctx.save();
@@ -148,4 +156,96 @@ export class Effects {
       ctx.restore();
     }
   }
+}
+
+function drawSpecialBurst(ctx, burst) {
+  const p = burst.palette;
+  const progress = 1 - burst.life / burst.maxLife;
+  const alpha = Math.max(0, burst.life / burst.maxLife);
+  const r = 10 + progress * 30;
+  ctx.save();
+  ctx.globalAlpha = alpha * .85;
+  ctx.translate(burst.x, burst.y);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.shadowBlur = 7;
+  ctx.shadowColor = p[1] ?? COLORS.sun;
+  if (burst.type === "ring" || burst.type === "wheel" || burst.type === "sunHalo") {
+    ctx.strokeStyle = p[0];
+    ctx.lineWidth = burst.type === "wheel" ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (burst.type === "doubleSlash" || burst.type === "cross" || burst.type === "sunset") {
+    ctx.strokeStyle = p[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-r, r * .55);
+    ctx.lineTo(r, -r * .55);
+    ctx.stroke();
+    if (burst.type !== "sunset") {
+      ctx.strokeStyle = p[2] ?? COLORS.ember;
+      ctx.beginPath();
+      ctx.moveTo(-r, -r * .55);
+      ctx.lineTo(r, r * .55);
+      ctx.stroke();
+    }
+  } else if (burst.type === "afterimage") {
+    for (let i = 0; i < 3; i += 1) {
+      ctx.globalAlpha *= .65;
+      ctx.strokeStyle = p[i % p.length];
+      ctx.beginPath();
+      ctx.arc((i - 1) * 8, 0, r - i * 5, -1.1, .5);
+      ctx.stroke();
+    }
+  } else if (burst.type === "thrust") {
+    ctx.fillStyle = p[0];
+    ctx.beginPath();
+    ctx.moveTo(r + 10, 0);
+    ctx.lineTo(-r, -4);
+    ctx.lineTo(-r, 4);
+    ctx.closePath();
+    ctx.fill();
+  } else if (burst.type === "wave") {
+    ctx.strokeStyle = p[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = -r; i <= r; i += 3) {
+      const yy = Math.sin(i * .34 + progress * 8) * 6;
+      if (i === -r) ctx.moveTo(i, yy);
+      else ctx.lineTo(i, yy);
+    }
+    ctx.stroke();
+  } else if (burst.type === "radiance" || burst.type === "crescent") {
+    ctx.strokeStyle = p[0];
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i += 1) {
+      const a = i / 8 * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 5, Math.sin(a) * 5);
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      ctx.stroke();
+    }
+  } else if (burst.type === "dragon") {
+    ctx.strokeStyle = p[2] ?? COLORS.ember;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-r, 3);
+    ctx.bezierCurveTo(-r * .5, -r, 0, r, r, -3);
+    ctx.stroke();
+    ctx.fillStyle = p[0];
+    ctx.beginPath();
+    ctx.moveTo(r + 9, -3);
+    ctx.lineTo(r - 3, -9);
+    ctx.lineTo(r - 3, 4);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = p[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, -1, .7);
+    ctx.stroke();
+  }
+  ctx.restore();
 }

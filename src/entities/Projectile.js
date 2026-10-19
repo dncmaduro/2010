@@ -6,8 +6,9 @@ export class Projectile {
     this.vx = options.vx ?? (kind === "sun" ? 286 : -182);
     this.life = options.life ?? 3;
     this.age = 0;
-    this.width = kind === "sun" ? 18 : 23;
-    this.height = kind === "sun" ? 12 : 11;
+    this.form = options.form ?? null;
+    this.width = options.width ?? (kind === "sun" ? 18 : 23);
+    this.height = options.height ?? (kind === "sun" ? 12 : 11);
     this.variant = options.variant ?? 0;
     this.hit = false;
   }

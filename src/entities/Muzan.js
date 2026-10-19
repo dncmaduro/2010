@@ -4,8 +4,9 @@ export class Muzan {
   constructor() {
     this.x = STAGE.enemyX;
     this.y = 158;
-    this.width = 34;
-    this.height = 66;
+    // Separate collision footprint from the smaller character sprite.
+    this.width = 25;
+    this.height = 46;
     this.targetY = 158;
     this.moveTimer = 0;
     this.attackTimer = 2.25;
@@ -37,8 +38,8 @@ export class Muzan {
     this.moveTimer -= dt;
     if (this.moveTimer <= 0) {
       this.moveTimer = 0.9 + Math.random() * 1.3;
-      const follow = Math.random() < 0.48 ? playerY : STAGE.playerMinY + 8 + Math.random() * (STAGE.playerMaxY - STAGE.playerMinY - 16);
-      this.targetY = Math.max(STAGE.playerMinY, Math.min(STAGE.playerMaxY, follow + (Math.random() * 54 - 27)));
+      const follow = Math.random() < 0.48 ? playerY : STAGE.enemyMinY + 8 + Math.random() * (STAGE.enemyMaxY - STAGE.enemyMinY - 16);
+      this.targetY = Math.max(STAGE.enemyMinY, Math.min(STAGE.enemyMaxY, follow + (Math.random() * 54 - 27)));
     }
     const distance = this.targetY - this.y;
     const step = GAME_CONFIG.battle.enemySpeed * dt;
@@ -52,7 +53,7 @@ export class Muzan {
 
   prepareAttack(playerY) {
     if (!this.canAttack()) return false;
-    this.lastAttackY = Math.max(STAGE.playerMinY, Math.min(STAGE.playerMaxY, playerY + (Math.random() * 50 - 25)));
+    this.lastAttackY = Math.max(STAGE.enemyMinY, Math.min(STAGE.enemyMaxY, playerY + (Math.random() * 50 - 25)));
     this.warningTimer = GAME_CONFIG.battle.warningDuration;
     this.attackTimer = 2.35 + Math.random() * 1.25;
     return true;
@@ -79,6 +80,6 @@ export class Muzan {
   }
 
   getBounds() {
-    return { left: this.x - 18, right: this.x + 17, top: this.y - 30, bottom: this.y + 31 };
+    return { left: this.x - 12, right: this.x + 13, top: this.y - 22, bottom: this.y + 23 };
   }
 }

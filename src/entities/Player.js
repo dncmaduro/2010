@@ -4,8 +4,9 @@ export class Player {
   constructor() {
     this.x = STAGE.playerX;
     this.y = 158;
-    this.width = 30;
-    this.height = 58;
+    // Hitbox stays independent from the visual sprite scale.
+    this.width = 22;
+    this.height = 42;
     this.speed = GAME_CONFIG.battle.playerSpeed;
     this.hearts = GAME_CONFIG.battle.playerHearts;
     this.invulnerable = 0;
@@ -51,6 +52,6 @@ export class Player {
   }
 
   getBounds() {
-    return { left: this.x - 12, right: this.x + 14, top: this.y - 25, bottom: this.y + 28 };
+    return { left: this.x - 10, right: this.x + 11, top: this.y - 19, bottom: this.y + 20 };
   }
 }

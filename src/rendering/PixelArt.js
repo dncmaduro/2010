@@ -35,8 +35,8 @@ const poly = (ctx, points, fill) => {
 };
 
 export function drawCastleBackground(ctx, time, mode = "fight") {
-  const w = ctx.canvas.width;
-  const h = ctx.canvas.height;
+  const w = 480;
+  const h = 270;
   const gradient = ctx.createLinearGradient(0, 0, 0, h);
   gradient.addColorStop(0, mode === "intro" ? "#13162e" : "#0b1022");
   gradient.addColorStop(.55, "#211932");
@@ -132,9 +132,13 @@ export function drawArenaFrame(ctx, time) {
   ctx.restore();
 }
 
-export function drawCharacter(ctx, type, x, y, facing, state, time, power = 0) {
+export function drawCharacter(ctx, type, x, y, facing, state, time, power = 0, spriteSheet = null) {
+  if (spriteSheet?.loaded) {
+    drawSpriteFrame(ctx, type, x, y, state, time, spriteSheet);
+    return;
+  }
   const flip = facing === "left" ? -1 : 1;
-  const scale = 2;
+  const scale = .66;
   const blink = state === "hurt" && Math.floor(time / 55) % 2 === 0;
   const breath = Math.sin(time * .006 + (type === "muzan" ? 1.2 : 0)) * (state === "idle" || state === "move" ? 1 : .35);
   const death = state === "death";
@@ -144,13 +148,42 @@ export function drawCharacter(ctx, type, x, y, facing, state, time, power = 0) {
   ctx.globalAlpha = blink ? .42 : death ? Math.max(.08, 1 - deathT * .75) : 1;
   ctx.fillStyle = "rgba(0,0,0,.48)";
   ctx.beginPath();
-  ctx.ellipse(x, y + 30, type === "tanjiro" ? 22 : 24, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y + 24, type === "tanjiro" ? 16 : 18, 3, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.translate(x, y + (death ? deathT * 16 : breath));
   ctx.scale(flip * scale, scale);
   if (death) ctx.rotate((flip > 0 ? 1 : -1) * deathT * .38);
   if (type === "tanjiro") drawTanjiro(ctx, state, power);
   else drawMuzan(ctx, state, power);
+  ctx.restore();
+}
+
+const SPRITE_FRAMES = {
+  tanjiro: {
+    idle: [[0, 0], [1, 0]], move: [[2, 0], [3, 0]], attack: [[0, 1], [0, 1]],
+    hurt: [[1, 1], [1, 1]], victory: [[2, 1], [2, 1]], death: [[3, 1], [3, 1]]
+  },
+  muzan: {
+    idle: [[0, 0], [1, 0]], move: [[2, 0], [0, 0]], prepare: [[1, 1], [1, 1]],
+    hurt: [[2, 1], [2, 1]], attack: [[2, 1], [2, 1]], death: [[3, 1], [3, 1]]
+  }
+};
+
+function drawSpriteFrame(ctx, type, x, y, state, time, spriteSheet) {
+  const frames = SPRITE_FRAMES[type] ?? SPRITE_FRAMES.tanjiro;
+  const choices = frames[state] ?? frames.idle;
+  const frame = choices[Math.floor(time / 150) % choices.length];
+  const cellW = spriteSheet.naturalWidth / 4;
+  const cellH = spriteSheet.naturalHeight / 2;
+  const width = type === "muzan" ? 37 : 35;
+  const height = type === "muzan" ? 51 : 48;
+  const bob = state === "move" ? Math.sin(time * .01) * 2 : Math.sin(time * .006) * .65;
+  ctx.save();
+  ctx.globalAlpha = state === "hurt" && Math.floor(time / 55) % 2 === 0 ? .42 : 1;
+  ctx.imageSmoothingEnabled = false;
+  ctx.shadowColor = type === "tanjiro" ? "rgba(255, 147, 61, .18)" : "rgba(196, 45, 72, .2)";
+  ctx.shadowBlur = state === "attack" || state === "prepare" ? 5 : 0;
+  ctx.drawImage(spriteSheet, frame[0] * cellW, frame[1] * cellH, cellW, cellH, x - width / 2, y - height / 2 + bob, width, height);
   ctx.restore();
 }
 
@@ -255,31 +288,6 @@ function drawMuzan(ctx, state, power) {
   }
 }
 
-export function drawSunWave(ctx, projectile, intensity = 0) {
-  ctx.save();
-  const alpha = Math.max(.15, 1 - projectile.age * .18);
-  ctx.globalAlpha = alpha;
-  ctx.shadowBlur = 8 + intensity * 1.5;
-  ctx.shadowColor = COLORS.sun;
-  ctx.fillStyle = COLORS.hot;
-  ctx.beginPath();
-  ctx.arc(projectile.x, projectile.y, 7 + Math.sin(projectile.age * 22) * 1.5 + intensity * .25, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = COLORS.sun;
-  ctx.beginPath();
-  ctx.moveTo(projectile.x - 17, projectile.y);
-  ctx.lineTo(projectile.x - 5, projectile.y - 5);
-  ctx.lineTo(projectile.x - 2, projectile.y);
-  ctx.lineTo(projectile.x - 5, projectile.y + 5);
-  ctx.closePath();
-  ctx.fill();
-  for (let i = 0; i < 3; i += 1) {
-    const y = projectile.y + (i - 1) * 7;
-    px(ctx, projectile.x - 24 - i * 3, y, 9 + i * 4, 2, i === 1 ? COLORS.hot : COLORS.ember);
-  }
-  ctx.restore();
-}
-
 export function drawBloodSpike(ctx, projectile) {
   ctx.save();
   ctx.shadowBlur = 5;
@@ -293,6 +301,223 @@ export function drawBloodSpike(ctx, projectile) {
   px(ctx, projectile.x + 17, projectile.y - 2, 18, 2, "#952b45");
   px(ctx, projectile.x + 25, projectile.y - 6, 11, 1, "#c03a48");
   ctx.restore();
+}
+
+export function drawSunForm(ctx, projectile, form, intensity = 0) {
+  if (!form) return;
+  const palette = form.colorPalette ?? [COLORS.hot, COLORS.sun, COLORS.ember];
+  const t = projectile.age;
+  const spin = t * (5 + form.id * .25);
+  const glow = 5 + Math.min(7, intensity * .35);
+  ctx.save();
+  ctx.globalAlpha = Math.max(.18, 1 - t / Math.max(.5, form.duration) * .5);
+  ctx.translate(projectile.x, projectile.y);
+  ctx.shadowBlur = glow;
+  ctx.shadowColor = palette[1];
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (form.visualType === "crescent") {
+    trail(ctx, palette, -28, 0, 18);
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(-3, 0, 13 + intensity * .12, -1.15, .72);
+    ctx.stroke();
+    ctx.strokeStyle = palette[1];
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(-5, 0, 17, -1.05, .45);
+    ctx.stroke();
+  } else if (form.visualType === "ring") {
+    ctx.rotate(spin);
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 11, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = palette[1];
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let i = 0; i < 8; i += 1) {
+      const a = i * Math.PI / 4;
+      px(ctx, Math.cos(a) * 19 - 1, Math.sin(a) * 19 - 1, 3, 3, palette[i % palette.length]);
+    }
+  } else if (form.visualType === "doubleSlash") {
+    trail(ctx, palette, -32, 0, 20);
+    for (const offset of [-6, 6]) {
+      ctx.strokeStyle = palette[offset < 0 ? 0 : 1];
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(3, offset, 15, -1.08, .55);
+      ctx.stroke();
+    }
+  } else if (form.visualType === "afterimage") {
+    for (let i = 3; i >= 1; i -= 1) {
+      ctx.globalAlpha *= .18;
+      poly(ctx, [[-9 - i * 8, -12], [0 - i * 8, -15], [8 - i * 8, 10], [-5 - i * 8, 13]], palette[i % palette.length]);
+    }
+    ctx.globalAlpha *= 5;
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-10, 12);
+    ctx.lineTo(15, -15);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-2, 15);
+    ctx.lineTo(23, -8);
+    ctx.stroke();
+  } else if (form.visualType === "wheel") {
+    ctx.rotate(spin);
+    ctx.strokeStyle = palette[1];
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 13, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 8; i += 1) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(i * Math.PI / 4) * 18, Math.sin(i * Math.PI / 4) * 18);
+      ctx.stroke();
+    }
+    ctx.fillStyle = palette[2];
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (form.visualType === "sunHalo") {
+    const points = [];
+    for (let i = 0; i < 24; i += 1) {
+      const a = i / 24 * Math.PI * 2;
+      const r = i % 2 ? 15 : 23;
+      points.push([Math.cos(a) * r, Math.sin(a) * r]);
+    }
+    poly(ctx, points, "rgba(255, 157, 53, .42)");
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = palette[2];
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, 21, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (form.visualType === "thrust") {
+    trail(ctx, palette, -38, 0, 26);
+    poly(ctx, [[20, 0], [-12, -4], [-29, 0], [-12, 4]], palette[0]);
+    poly(ctx, [[8, 0], [-12, -2], [-21, 0], [-12, 2]], palette[1]);
+    for (let i = 0; i < 5; i += 1) {
+      const a = (i - 2) * .28;
+      px(ctx, Math.cos(a) * 18 - 1, Math.sin(a) * 18 - 1, 3, 3, palette[i % palette.length]);
+    }
+  } else if (form.visualType === "wave") {
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = -30; i <= 18; i += 3) {
+      const yy = Math.sin(i * .27 + t * 8) * 8;
+      if (i === -30) ctx.moveTo(i, yy);
+      else ctx.lineTo(i, yy);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = palette[2];
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = -28; i <= 14; i += 3) {
+      const yy = Math.sin(i * .27 + t * 8 + .7) * 12;
+      if (i === -28) ctx.moveTo(i, yy);
+      else ctx.lineTo(i, yy);
+    }
+    ctx.stroke();
+  } else if (form.visualType === "sunset") {
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(-4, 7, 19, Math.PI * 1.08, Math.PI * 1.92);
+    ctx.stroke();
+    ctx.strokeStyle = palette[1];
+    ctx.beginPath();
+    ctx.moveTo(-20, 15);
+    ctx.quadraticCurveTo(-4, -4, 15, -18);
+    ctx.stroke();
+    ctx.strokeStyle = palette[2];
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-14, 16);
+    ctx.quadraticCurveTo(4, 2, 20, -12);
+    ctx.stroke();
+  } else if (form.visualType === "radiance") {
+    ctx.rotate(spin * .35);
+    for (let i = 0; i < 12; i += 1) {
+      const a = i / 12 * Math.PI * 2;
+      const r1 = 7;
+      const r2 = i % 2 ? 20 : 27;
+      ctx.strokeStyle = palette[i % palette.length];
+      ctx.lineWidth = i % 3 === 0 ? 2 : 1;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+      ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = palette[0];
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (form.visualType === "dragon") {
+    ctx.strokeStyle = palette[2];
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(-33, 5);
+    ctx.bezierCurveTo(-19, -17, -7, 17, 6, -6);
+    ctx.bezierCurveTo(15, -20, 20, -8, 24, -1);
+    ctx.stroke();
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-31, 3);
+    ctx.bezierCurveTo(-18, -14, -6, 14, 6, -5);
+    ctx.bezierCurveTo(15, -18, 20, -7, 25, 0);
+    ctx.stroke();
+    poly(ctx, [[29, 0], [16, -9], [18, 0], [15, 9]], palette[1]);
+    px(ctx, 24, -4, 2, 2, COLORS.ink);
+    px(ctx, 32, -1, 4, 1, palette[0]);
+    px(ctx, -27, 11, 5, 2, palette[3]);
+  } else if (form.visualType === "cross") {
+    ctx.strokeStyle = palette[0];
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -26);
+    ctx.lineTo(0, 23);
+    ctx.stroke();
+    ctx.strokeStyle = palette[2];
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-27, 0);
+    ctx.lineTo(28, 0);
+    ctx.stroke();
+    ctx.strokeStyle = palette[1];
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-19, -15);
+    ctx.lineTo(19, 15);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-19, 15);
+    ctx.lineTo(19, -15);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function trail(ctx, palette, fromX, y, length) {
+  for (let i = 0; i < 4; i += 1) {
+    px(ctx, fromX - i * 5, y + (i % 2 ? 2 : -2), length - i * 5, i === 0 ? 2 : 1, palette[i % palette.length]);
+  }
 }
 
 export function drawGiftShirt(ctx, x, y, scale = 1) {
@@ -363,7 +588,8 @@ export function drawPixelButton(ctx, rect, label, options = {}) {
   px(ctx, rect.x + 3, rect.y + 2 + lift, rect.w - 6, 2, glow);
   px(ctx, rect.x + 4, rect.y + rect.h - 4 + lift, rect.w - 8, 2, "#1d1a2a");
   ctx.fillStyle = disabled ? "#8d8790" : COLORS.white;
-  ctx.font = "900 10px Arial, sans-serif";
+  const labelSize = label.length > 22 ? 7.5 : label.length > 18 ? 8.5 : 10;
+  ctx.font = `900 ${labelSize}px Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(label, rect.x + rect.w / 2, rect.y + rect.h / 2 - 1 + lift);

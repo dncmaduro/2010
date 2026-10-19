@@ -2,6 +2,8 @@
 
 Mini game đối kháng 2D phong cách anime pixel art, chạy hoàn toàn offline bằng HTML5 Canvas và Web Audio API.
 
+Phiên bản hiện tại dùng world resolution 960×540 (logic 480×270, render nearest-neighbor 2×), sprite sheet PNG nội bộ cho Tanjiro/Muzan và hệ thống 12 thức tách theo dữ liệu trong `src/sunForms.js`.
+
 ## Chạy game
 
 Không cần cài package. Từ thư mục này, chạy một static server bất kỳ:
@@ -28,6 +30,11 @@ Nút cảm ứng lên/xuống/tấn công sẽ tự xuất hiện trên màn hì
 
 ## Tùy biến nhanh
 
-Nội dung người nhận, lời nhắn và tên quà nằm ở `src/config.js` trong object `GAME_CONFIG`.
+Nội dung người nhận, lời nhắn và tên quà nằm ở `src/config.js` trong object `LOVE_CONFIG`.
 
 Nếu thêm `public/assets/gift-shirt.png` hoặc `public/assets/gift-buffet.png`, game sẽ tự dùng ảnh đó trong overlay quà; nếu không có sẽ dùng minh họa pixel art vẽ bằng Canvas.
+
+Sprite sheet mặc định:
+
+- `public/assets/tanjiro-sprite-sheet.png`
+- `public/assets/muzan-sprite-sheet.png`

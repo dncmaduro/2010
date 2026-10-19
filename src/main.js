@@ -1,4 +1,5 @@
 import { Game } from "./game.js";
+import { LOVE_CONFIG } from "./config.js";
 
 const canvas = document.getElementById("gameCanvas");
 const statusElement = document.getElementById("game-status");
@@ -47,5 +48,5 @@ for (const button of document.querySelectorAll(".touch-btn")) {
   button.addEventListener("pointerleave", release);
 }
 
-game.announce("Màn hướng dẫn. Nhấn Enter hoặc nút bắt đầu trận chiến.");
+game.announce(LOVE_CONFIG.introStory);
 requestAnimationFrame(frame);

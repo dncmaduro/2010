@@ -14,6 +14,16 @@ python3 -m http.server 8080
 
 Sau đó mở [http://localhost:8080](http://localhost:8080).
 
+## Deploy lên Vercel
+
+Project đã có `vercel.json` để ép Vercel phục vụ thư mục gốc. Điều này cần thiết vì project có thư mục `public/` chứa sprite, trong khi `index.html` nằm ở thư mục gốc.
+
+Trong Vercel, đặt **Root Directory** là thư mục chứa file này và để **Framework Preset** là `Other`. Có thể deploy bằng:
+
+```bash
+npx vercel --prod
+```
+
 Có thể mở trực tiếp `index.html` trong trình duyệt hiện đại, nhưng static server được khuyến nghị để ES Modules hoạt động ổn định.
 
 ## Điều khiển

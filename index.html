@@ -14,10 +14,19 @@
         <canvas id="gameCanvas" width="1920" height="1080" aria-label="Game canvas"></canvas>
         <div class="scanlines" aria-hidden="true"></div>
       </div>
-      <div class="touch-controls" aria-label="Điều khiển cảm ứng">
-        <button class="touch-btn" data-action="up" aria-label="Di chuyển lên">▲</button>
-        <button class="touch-btn attack-btn" data-action="attack" aria-label="Tấn công">✦</button>
-        <button class="touch-btn" data-action="down" aria-label="Di chuyển xuống">▼</button>
+      <div class="mobile-controls" aria-label="Điều khiển cảm ứng">
+        <div class="joystick-panel">
+          <div class="joystick" id="joystick" aria-label="Joystick di chuyển dọc">
+            <div class="joystick-ring"></div>
+            <div class="joystick-thumb" id="joystickThumb"></div>
+          </div>
+          <span class="control-caption">DI CHUYỂN</span>
+        </div>
+        <button class="mobile-attack" id="mobileAttack" type="button" aria-label="Tung chiêu Hơi Thở Mặt Trời">
+          <span class="attack-sigil" aria-hidden="true"></span>
+          <span>CHIÊU</span>
+        </button>
+        <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-label="Bật toàn màn hình">FULL</button>
       </div>
       <p class="sr-only" id="game-status" aria-live="polite"></p>
     </main>

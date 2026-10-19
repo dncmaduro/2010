@@ -47,6 +47,8 @@ export class Game {
     this.hits = 0;
     this.banner = "";
     this.bannerTimer = 0;
+    this.techniqueCast = null;
+    this.techniqueCastTimer = 0;
     this.warningActive = false;
     this.victoryTimer = 0;
     this.giftRevealTimer = 0;
@@ -92,6 +94,8 @@ export class Game {
     this.warningActive = false;
     this.banner = "";
     this.bannerTimer = 0;
+    this.techniqueCast = null;
+    this.techniqueCastTimer = 0;
     this.announce("Em bé thối ơi, trận chiến bắt đầu! Dùng W/S hoặc mũi tên để né và Space để tung chiêu.");
   }
 
@@ -105,6 +109,8 @@ export class Game {
     this.muzan.reset();
     this.currentForm = getSunForm(0);
     this.hits = 0;
+    this.techniqueCast = null;
+    this.techniqueCastTimer = 0;
     this.giftRevealTimer = 0;
     this.giftReveal = 0;
     this.claimed = false;
@@ -116,6 +122,7 @@ export class Game {
     this.time += safeDt * 1000;
     if (!this.paused) this.effects.update(safeDt);
     this.bannerTimer = Math.max(0, this.bannerTimer - safeDt);
+    this.techniqueCastTimer = Math.max(0, this.techniqueCastTimer - safeDt);
 
     if (this.screen === "fight") this.updateFight(safeDt);
     else if (this.screen === "victory") this.updateVictory(safeDt);
@@ -138,7 +145,14 @@ export class Game {
       if (this.warningActive) {
         this.audio.warning();
         this.effects.addText("CẢNH BÁO!", 385, this.muzan.lastAttackY - 14, { color: COLORS.red, size: 9, life: .7, speed: 4 });
-        this.announce("Muzan chuẩn bị Dây Thép Gai Hắc Huyết. Hãy di chuyển lên hoặc xuống!");
+        this.techniqueCast = {
+          title: "HẮC HUYẾT CHÔNG",
+          subtitle: "DÂY THÉP GAI • MUZAN",
+          palette: [COLORS.red, "#ff514c", "#6e2037"],
+          actor: "muzan"
+        };
+        this.techniqueCastTimer = .92;
+        this.announce("Muzan chuẩn bị Hắc Huyết Chông. Hãy di chuyển lên hoặc xuống!");
       }
     }
 
@@ -250,6 +264,13 @@ export class Game {
     if (this.screen !== "fight" || this.paused) return;
     if (this.player.tryAttack()) {
       const form = this.currentForm;
+      this.techniqueCast = {
+        title: `THỨC THỨ ${form.id} • ${form.nameVi}`,
+        subtitle: form.nameRomaji,
+        palette: form.colorPalette,
+        actor: "tanjiro"
+      };
+      this.techniqueCastTimer = .92;
       this.projectiles.push(new Projectile("sun", this.player.x + 24, this.player.y - 4, {
         form,
         vx: form.speed ?? GAME_CONFIG.battle.projectileSpeed,
@@ -383,7 +404,7 @@ export class Game {
       ctx.fillRect(38, this.muzan.lastAttackY - 1, 404, 2);
       ctx.fillStyle = `rgba(255, 100, 66, ${pulse * .42})`;
       ctx.fillRect(38, this.muzan.lastAttackY - 8, 404, 16);
-      drawText(ctx, "DÂY THÉP GAI HẮC HUYẾT", 240, this.muzan.lastAttackY - 10, { size: 6.5, align: "center", color: COLORS.hot, weight: 900 });
+      drawText(ctx, "HẮC HUYẾT CHÔNG", 240, this.muzan.lastAttackY - 10, { size: 6.5, align: "center", color: COLORS.hot, weight: 900 });
     }
     for (const projectile of this.projectiles) {
       if (projectile.kind === "sun") drawSunForm(ctx, projectile, projectile.form, this.hits);
@@ -396,6 +417,7 @@ export class Game {
     this.effects.draw(ctx);
     ctx.restore();
     if (this.bannerTimer > 0 && this.banner) this.drawBanner(ctx);
+    if (this.techniqueCastTimer > 0 && this.techniqueCast) this.drawTechniqueCast(ctx);
     if (this.paused) this.drawPause(ctx);
   }
 
@@ -432,6 +454,49 @@ export class Game {
     drawText(ctx, "HƠI THỞ MẶT TRỜI", 240, 61, { size: 5.5, align: "center", color: COLORS.teal, weight: 900, shadow: false });
     drawText(ctx, this.banner, 240, 70, { size: 7, align: "center", color: COLORS.hot, weight: 900 });
     drawText(ctx, "HOÀN THÀNH!", 240, 79, { size: 6, align: "center", color: COLORS.white, weight: 900 });
+    ctx.restore();
+  }
+
+  drawTechniqueCast(ctx) {
+    const cast = this.techniqueCast;
+    const maxTime = .92;
+    const progress = 1 - this.techniqueCastTimer / maxTime;
+    const alpha = Math.min(1, progress / .12, this.techniqueCastTimer / .2);
+    const pulse = 1 + Math.sin(this.time * .018) * .035;
+    const palette = cast.palette ?? [COLORS.hot, COLORS.sun, COLORS.ember];
+    const titleSize = cast.actor === "muzan" ? 13 : 12;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `900 ${titleSize}px Impact, "Arial Black", sans-serif`;
+    const titleFit = Math.min(1, 400 / Math.max(1, ctx.measureText(cast.title).width));
+    ctx.translate(240, 109 - Math.min(7, progress * 7));
+    ctx.scale(pulse * titleFit, pulse);
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = palette[1] ?? COLORS.sun;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = cast.actor === "muzan" ? "#160d1e" : "#29152b";
+    ctx.strokeText(cast.title, 0, 0);
+    ctx.fillStyle = palette[0] ?? COLORS.hot;
+    ctx.fillText(cast.title, 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#fff4c1";
+    ctx.strokeText(cast.title, 0, -1);
+    ctx.font = '900 5px "Trebuchet MS", Arial, sans-serif';
+    ctx.fillStyle = COLORS.white;
+    ctx.fillText(cast.subtitle, 0, 14);
+    ctx.strokeStyle = palette[2] ?? COLORS.ember;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-112, 1);
+    ctx.lineTo(-72, 1);
+    ctx.moveTo(72, 1);
+    ctx.lineTo(112, 1);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -479,6 +544,7 @@ export class Game {
       drawText(ctx, "THỨC THỨ 12 — MẶT TRỜI BẤT DIỆT", 240, 136, { size: 7, align: "center", color: COLORS.white, weight: 900 });
     }
     if (this.bannerTimer > 0 && this.banner) this.drawBanner(ctx);
+    if (this.techniqueCastTimer > 0 && this.techniqueCast) this.drawTechniqueCast(ctx);
   }
 
   drawGift(ctx) {
